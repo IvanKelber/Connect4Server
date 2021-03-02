@@ -1,9 +1,10 @@
 package msg
 
 import (
-    "encoding/binary"
-    "bytes"
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"io"
 )
 
 //MessageType is either Request or Response
@@ -14,8 +15,8 @@ type MessageID int
 
 //Message is serialized and sent via TCP
 type Message struct {
-	Type MessageType
-	ID MessageID
+	Type    MessageType
+	ID      MessageID
 	Content []byte
 }
 
@@ -25,18 +26,21 @@ const DELIMITER byte = ' '
 //Request and Response consts
 const (
 	Request MessageType = iota
-	Response 
+	Response
 )
 
 //Requst/Response types
 const (
-	StartGameReq MessageID = iota
+	NewPlayerReq MessageID = iota
+	StartGameReq
 	StartTurnReq
 	PlacePieceReq
 	UpdateStateReq
 	AnimationDoneReq
 	GameOverReq
-	StartGameResp 
+
+	NewPlayerResp
+	StartGameResp
 	StartTurnResp
 	PlacePieceResp
 	UpdateStateResp
@@ -48,7 +52,6 @@ const (
 func CreateNewMessage(t MessageType, id MessageID, content []byte) Message {
 	return Message{t, id, content}
 }
-
 
 //Serialize messages into a standardized byte format
 func Serialize(message Message, buffer *bytes.Buffer) error {
@@ -64,7 +67,7 @@ func Serialize(message Message, buffer *bytes.Buffer) error {
 	buffer.Write(b)
 	buffer.WriteByte(DELIMITER)
 	//Last append the content
-	_ , err := buffer.Write(message.Content)
+	_, err := buffer.Write(message.Content)
 	if err != nil {
 		fmt.Printf("Failed to serialize %s\n", message.Content)
 		return err
@@ -81,19 +84,21 @@ func Deserialize(buffer bytes.Buffer) Message {
 	if err != nil {
 		fmt.Printf("Failed to read message type %s\n", err)
 	}
-	messageType = messageType[0:len(messageType) - 1]
+	messageType = messageType[0 : len(messageType)-1]
 
 	messageID, err := buffer.ReadBytes(DELIMITER)
 	if err != nil {
-		fmt.Printf("Failed to read message ID %s\n",err)
-	}	
-	messageID = messageID[0:len(messageID) - 1]
+		fmt.Printf("Failed to read message ID %s\n", err)
+	}
+	messageID = messageID[0 : len(messageID)-1]
 
 	content, err := buffer.ReadBytes(DELIMITER)
 	if err != nil {
-		fmt.Printf("Failed to read message content %s\n", err)
+		if err != io.EOF {
+			fmt.Printf("Failed to read message content %s\n", err)
+		}
 	}
-	content = content[0:len(content) - 1]
+	content = content[0 : len(content)-1]
 
 	return CreateNewMessage(MessageType(binary.BigEndian.Uint16(messageType)), MessageID(binary.BigEndian.Uint16(messageID)), content)
 }
