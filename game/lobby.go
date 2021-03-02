@@ -1,9 +1,12 @@
 package game
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"sync"
+
+	"kelber.com/connect4/msg"
 )
 
 type lobbyType map[string]Player
@@ -31,6 +34,21 @@ func (lobby *Lobby) AddPlayer(p Player) {
 	if _, ok := lobby.data[p.Username]; !ok {
 		lobby.data[p.Username] = p
 		fmt.Printf("Successfully added player '%s' at %s\n", p.Username, p.GetAddress())
+	}
+}
+
+func (lobby *Lobby) UpdatePlayers() {
+	lobby.Lock()
+	defer lobby.Unlock()
+	usernames := make([][]byte, 0)
+	for _, player := range lobby.data {
+		usernames = append(usernames, []byte(player.Username))
+	}
+	m := msg.CreateNewMessage(msg.Response, msg.UpdateStateResp, 29, usernames)
+	b := bytes.Buffer{}
+	msg.Serialize(m, &b)
+	for _, player := range lobby.data {
+		(*player.Conn).Write(b.Bytes())
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 )
 
 //MessageType is either Request or Response
@@ -15,13 +14,14 @@ type MessageID int
 
 //Message is serialized and sent via TCP
 type Message struct {
-	Type    MessageType
-	ID      MessageID
-	Content []byte
+	Type      MessageType
+	ID        MessageID
+	delimiter byte
+	Content   [][]byte
 }
 
 //DELIMITER is used to deliniate sections in the byte data stream
-const DELIMITER byte = ' '
+const DELIMITER byte = 28
 
 //Request and Response consts
 const (
@@ -49,8 +49,8 @@ const (
 )
 
 //CreateNewMessage is a constructor for Message
-func CreateNewMessage(t MessageType, id MessageID, content []byte) Message {
-	return Message{t, id, content}
+func CreateNewMessage(t MessageType, id MessageID, delimiter byte, content [][]byte) Message {
+	return Message{t, id, delimiter, content}
 }
 
 //Serialize messages into a standardized byte format
@@ -66,11 +66,18 @@ func Serialize(message Message, buffer *bytes.Buffer) error {
 	binary.BigEndian.PutUint16(b, uint16(message.ID))
 	buffer.Write(b)
 	buffer.WriteByte(DELIMITER)
+
+	//Third serialize the delimiter (if any) to be used when parsing the content
+	buffer.WriteByte(message.delimiter)
+	buffer.WriteByte(DELIMITER)
 	//Last append the content
-	_, err := buffer.Write(message.Content)
-	if err != nil {
-		fmt.Printf("Failed to serialize %s\n", message.Content)
-		return err
+	for _, content := range message.Content {
+		_, err := buffer.Write(content)
+		if err != nil {
+			fmt.Printf("Failed to serialize %s\n", content)
+			return err
+		}
+		buffer.WriteByte(message.delimiter)
 	}
 	buffer.WriteByte(DELIMITER)
 	buffer.WriteByte('\n')
@@ -92,13 +99,15 @@ func Deserialize(buffer bytes.Buffer) Message {
 	}
 	messageID = messageID[0 : len(messageID)-1]
 
-	content, err := buffer.ReadBytes(DELIMITER)
-	if err != nil {
-		if err != io.EOF {
-			fmt.Printf("Failed to read message content %s\n", err)
+	contentDelimiter, _ := buffer.ReadByte()
+	content := make([][]byte, 0)
+
+	for {
+		c, err := buffer.ReadBytes(contentDelimiter)
+		content = append(content, c[:len(c)-1])
+		if err != nil {
+			break
 		}
 	}
-	content = content[0 : len(content)-1]
-
-	return CreateNewMessage(MessageType(binary.BigEndian.Uint16(messageType)), MessageID(binary.BigEndian.Uint16(messageID)), content)
+	return CreateNewMessage(MessageType(binary.BigEndian.Uint16(messageType)), MessageID(binary.BigEndian.Uint16(messageID)), contentDelimiter, content)
 }

@@ -62,7 +62,6 @@ func handleConnection(conn *net.Conn) {
 	}
 	buffer := bytes.NewBuffer(b)
 	message := msg.Deserialize(bytes.Buffer(*buffer))
-
 	go func() {
 		parseMessage(conn, message)
 		handleConnection(conn)
@@ -89,7 +88,7 @@ func handleRequest(conn *net.Conn, message msg.Message) bool {
 	case msg.StartGameReq:
 
 	case msg.StartTurnReq:
-		player := int(message.Content[0])
+		player := int(message.Content[0][0])
 		StartTurn(player)
 	case msg.PlacePieceReq:
 
@@ -104,7 +103,7 @@ func handleRequest(conn *net.Conn, message msg.Message) bool {
 }
 
 func CreateNewPlayer(conn *net.Conn, message msg.Message) {
-	username, err := bytes.NewBuffer(message.Content).ReadString('\n')
+	username, err := bytes.NewBuffer(message.Content[0]).ReadString('\n')
 	if err != nil {
 		if err != io.EOF {
 			fmt.Printf("Encountered error when reading player username %s\n", err)
@@ -112,7 +111,7 @@ func CreateNewPlayer(conn *net.Conn, message msg.Message) {
 	}
 	p := game.CreatePlayer(username, conn)
 	lobby.AddPlayer(p)
-	fmt.Printf("New lobby: %s\n", lobby)
+	lobby.UpdatePlayers()
 }
 
 func StartTurn(player int) {
