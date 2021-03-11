@@ -30,10 +30,9 @@ func main() {
 	go listen(&conn)
 	for {
 		username, _ := reader.ReadString('\n')
-		m := msg.CreateNewMessage(msg.Request, msg.NewPlayerReq, 29, [][]byte{[]byte(username)})
+		m := msg.CreateNewMessage(msg.Request, msg.NewPlayerReq, msg.DefaultContentDelimiter, [][]byte{[]byte(username)})
 		buffer := bytes.Buffer{}
 		msg.Serialize(m, &buffer)
-		fmt.Printf("msg: %v\n", buffer.Bytes())
 		conn.Write(buffer.Bytes())
 
 	}
@@ -41,7 +40,8 @@ func main() {
 
 func listen(conn *net.Conn) {
 	for {
-		b, err := bufio.NewReader(*conn).ReadBytes('\n')
+		fmt.Println("Listening for response")
+		b, err := bufio.NewReader(*conn).ReadBytes(msg.EndOfMessage)
 		if err != nil {
 			fmt.Println("Server is down.")
 			(*conn).Close()
@@ -49,7 +49,7 @@ func listen(conn *net.Conn) {
 		}
 		buffer := bytes.NewBuffer(b)
 		message := msg.Deserialize(bytes.Buffer(*buffer))
-
+		fmt.Println("received message: ", message)
 		parseResponse(conn, message)
 	}
 }
@@ -78,6 +78,7 @@ func parseResponse(conn *net.Conn, message msg.Message) {
 }
 
 func UpdateState(conn *net.Conn, message msg.Message) {
+	fmt.Println("Update state...")
 	builder := strings.Builder{}
 	for _, username := range message.Content {
 		builder.Write(username)

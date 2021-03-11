@@ -2,15 +2,14 @@ package msg
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 )
 
 //MessageType is either Request or Response
-type MessageType int
+type MessageType byte
 
 //MessageID determines the type of request and response sent
-type MessageID int
+type MessageID byte
 
 //Message is serialized and sent via TCP
 type Message struct {
@@ -20,8 +19,14 @@ type Message struct {
 	Content   [][]byte
 }
 
-//DELIMITER is used to deliniate sections in the byte data stream
-const DELIMITER byte = 28
+//FieldDelimiter is used to deliniate sections in the byte data stream
+const FieldDelimiter byte = 28
+
+//DefaultContentDelimiter is used to deliniate bits of content
+const DefaultContentDelimiter byte = 29
+
+//EndOfMessage is used to denote an end to a message
+const EndOfMessage byte = 31
 
 //Request and Response consts
 const (
@@ -29,7 +34,7 @@ const (
 	Response
 )
 
-//Requst/Response types
+//Requst types
 const (
 	NewPlayerReq MessageID = iota
 	StartGameReq
@@ -38,8 +43,11 @@ const (
 	UpdateStateReq
 	AnimationDoneReq
 	GameOverReq
+)
 
-	NewPlayerResp
+//Response types
+const (
+	NewPlayerResp MessageID = iota
 	StartGameResp
 	StartTurnResp
 	PlacePieceResp
@@ -57,19 +65,17 @@ func CreateNewMessage(t MessageType, id MessageID, delimiter byte, content [][]b
 func Serialize(message Message, buffer *bytes.Buffer) error {
 
 	//First serialize the message type
-	b := make([]byte, 2)
-	binary.BigEndian.PutUint16(b, uint16(message.Type))
-	buffer.Write(b)
-	buffer.WriteByte(DELIMITER)
+	buffer.WriteByte(byte(message.Type))
+	buffer.WriteByte(FieldDelimiter)
+
 	//Second serialize the messageID
-	b = make([]byte, 2)
-	binary.BigEndian.PutUint16(b, uint16(message.ID))
-	buffer.Write(b)
-	buffer.WriteByte(DELIMITER)
+	buffer.WriteByte(byte(message.ID))
+	buffer.WriteByte(FieldDelimiter)
 
 	//Third serialize the delimiter (if any) to be used when parsing the content
 	buffer.WriteByte(message.delimiter)
-	buffer.WriteByte(DELIMITER)
+	buffer.WriteByte(FieldDelimiter)
+
 	//Last append the content
 	for _, content := range message.Content {
 		_, err := buffer.Write(content)
@@ -79,21 +85,21 @@ func Serialize(message Message, buffer *bytes.Buffer) error {
 		}
 		buffer.WriteByte(message.delimiter)
 	}
-	buffer.WriteByte(DELIMITER)
-	buffer.WriteByte('\n')
+	buffer.WriteByte(FieldDelimiter)
+	buffer.WriteByte(EndOfMessage)
 
 	return nil
 }
 
 //Deserialize byte arrays into message given expected format
 func Deserialize(buffer bytes.Buffer) Message {
-	messageType, err := buffer.ReadBytes(DELIMITER)
+	messageType, err := buffer.ReadBytes(FieldDelimiter)
 	if err != nil {
 		fmt.Printf("Failed to read message type %s\n", err)
 	}
 	messageType = messageType[0 : len(messageType)-1]
 
-	messageID, err := buffer.ReadBytes(DELIMITER)
+	messageID, err := buffer.ReadBytes(FieldDelimiter)
 	if err != nil {
 		fmt.Printf("Failed to read message ID %s\n", err)
 	}
@@ -109,5 +115,5 @@ func Deserialize(buffer bytes.Buffer) Message {
 			break
 		}
 	}
-	return CreateNewMessage(MessageType(binary.BigEndian.Uint16(messageType)), MessageID(binary.BigEndian.Uint16(messageID)), contentDelimiter, content)
+	return CreateNewMessage(MessageType(messageType[0]), MessageID(messageID[0]), contentDelimiter, content)
 }
