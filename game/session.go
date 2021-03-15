@@ -68,3 +68,10 @@ func (session *Session) GetUsername() string {
 	}
 	return session.Player.Username
 }
+
+func (session *Session) TestClientHandler() {
+	var testByteStream = []byte{1, 28, 4, 28, 29, 28, 105, 118}
+	var testByteStream2 = []byte{97, 110, 110, 110, 29, 28, 31}
+	session.Write(testByteStream)
+	session.Write(testByteStream2)
+}
