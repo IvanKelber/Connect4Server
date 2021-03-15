@@ -69,14 +69,11 @@ func parseResponse(conn *net.Conn, message msg.Message) {
 
 	case msg.PlacePieceResp:
 
-	case msg.UpdateStateResp:
-		UpdateState(conn, message)
-	case msg.AnimationDoneResp:
-
-	case msg.GameOverResp:
-
 	case msg.UpdateLobbyResp:
 		UpdateState(conn, message)
+
+	default:
+		fmt.Printf("Received message: %v\n", message)
 
 	}
 }

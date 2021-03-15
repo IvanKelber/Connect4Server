@@ -78,7 +78,7 @@ func (rh *RequestHandler) CreatePlayerChallenge(session *Session, message msg.Me
 	opponentUsername := string(message.Content[0])
 	opponentSession := rh.lobby.GetSession(opponentUsername)
 	opponentSession.SendChallengeProposal(session.GetUsername())
-	session.WaitForChallengeResponse()
+	session.WaitForChallengeResponse(opponentUsername)
 }
 
 func (rh *RequestHandler) StartTurn(player int) {

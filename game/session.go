@@ -82,8 +82,10 @@ func (session *Session) SendChallengeProposal(opponent string) {
 	session.SendMessage(message)
 }
 
-func (session *Session) WaitForChallengeResponse() {
-	message := msg.CreateNewMessage(msg.Response, msg.WaitForChallengeResp, msg.DefaultContentDelimiter, make([][]byte, 0))
+func (session *Session) WaitForChallengeResponse(opponent string) {
+	content := [][]byte{[]byte(opponent)}
+
+	message := msg.CreateNewMessage(msg.Response, msg.WaitForChallengeResp, msg.DefaultContentDelimiter, content)
 	session.SendMessage(message)
 }
 
