@@ -54,6 +54,7 @@ const (
 	UpdateStateResp
 	AnimationDoneResp
 	GameOverResp
+	UpdateLobbyResp
 )
 
 //CreateNewMessage is a constructor for Message
@@ -106,6 +107,8 @@ func Deserialize(buffer bytes.Buffer) Message {
 	messageID = messageID[0 : len(messageID)-1]
 
 	contentDelimiter, _ := buffer.ReadByte()
+	buffer.ReadByte() //Consumes last field delimiter before content begins
+
 	content := make([][]byte, 0)
 
 	for {

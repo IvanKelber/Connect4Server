@@ -58,7 +58,8 @@ func (lobby *Lobby) UpdatePlayers() {
 	for _, player := range lobby.data {
 		usernames = append(usernames, []byte(player.GetUsername()))
 	}
-	m := msg.CreateNewMessage(msg.Response, msg.UpdateStateResp, msg.DefaultContentDelimiter, usernames)
+	fmt.Println("Creating message: ", usernames)
+	m := msg.CreateNewMessage(msg.Response, msg.UpdateLobbyResp, msg.DefaultContentDelimiter, usernames)
 	b := bytes.Buffer{}
 	msg.Serialize(m, &b)
 	for _, session := range lobby.data {

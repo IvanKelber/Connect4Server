@@ -33,6 +33,7 @@ func main() {
 		m := msg.CreateNewMessage(msg.Request, msg.NewPlayerReq, msg.DefaultContentDelimiter, [][]byte{[]byte(username)})
 		buffer := bytes.Buffer{}
 		msg.Serialize(m, &buffer)
+		fmt.Println("Creating message: ", buffer.Bytes())
 		conn.Write(buffer.Bytes())
 
 	}
@@ -73,6 +74,9 @@ func parseResponse(conn *net.Conn, message msg.Message) {
 	case msg.AnimationDoneResp:
 
 	case msg.GameOverResp:
+
+	case msg.UpdateLobbyResp:
+		UpdateState(conn, message)
 
 	}
 }
