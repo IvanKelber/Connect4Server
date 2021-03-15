@@ -53,9 +53,15 @@ func (session *Session) OnExit() {
 	return
 }
 
-func (session *Session) Write(bytes []byte) {
-	fmt.Println("Writing bytes: ", bytes)
-	(*session.conn).Write(bytes)
+func (session *Session) Write(buffer bytes.Buffer) {
+	fmt.Println("Writing bytes: ", buffer.Bytes())
+	(*session.conn).Write(buffer.Bytes())
+}
+
+func (session *Session) SendMessage(message msg.Message) {
+	b := bytes.Buffer{}
+	msg.Serialize(message, &b)
+	session.Write(b)
 }
 
 func (session *Session) GetAddress() string {
@@ -69,9 +75,21 @@ func (session *Session) GetUsername() string {
 	return session.Player.Username
 }
 
+//Sends a challenge request from the other user
+func (session *Session) SendChallengeProposal(opponent string) {
+	challenger := [][]byte{[]byte(opponent)}
+	message := msg.CreateNewMessage(msg.Response, msg.ChallengeProposalResp, msg.DefaultContentDelimiter, challenger)
+	session.SendMessage(message)
+}
+
+func (session *Session) WaitForChallengeResponse() {
+	message := msg.CreateNewMessage(msg.Response, msg.WaitForChallengeResp, msg.DefaultContentDelimiter, make([][]byte, 0))
+	session.SendMessage(message)
+}
+
 func (session *Session) TestClientHandler() {
-	var testByteStream = []byte{1, 28, 4, 28, 29, 28, 105, 118}
-	var testByteStream2 = []byte{97, 110, 110, 110, 29, 28, 31}
-	session.Write(testByteStream)
-	session.Write(testByteStream2)
+	// var testByteStream = []byte{1, 28, 4, 28, 29, 28, 105, 118}
+	// var testByteStream2 = []byte{97, 110, 110, 110, 29, 28, 31}
+	// session.Write(testByteStream)
+	// session.Write(testByteStream2)
 }

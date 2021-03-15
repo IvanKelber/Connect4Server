@@ -28,11 +28,11 @@ func (rh *RequestHandler) ParseMessage(session *Session, message msg.Message) bo
 	case msg.Request:
 		return rh.handleRequest(session, message)
 	case msg.Response:
-		return rh.handleResponse(session, message)
+		fmt.Printf("Server does not handle responses.\n")
 	default:
 		fmt.Printf("Unknown message type: %d\n", message.Type)
-		return false
 	}
+	return false
 
 }
 
@@ -47,13 +47,15 @@ func (rh *RequestHandler) handleRequest(session *Session, message msg.Message) b
 		rh.StartTurn(player)
 	case msg.PlacePieceReq:
 
-	case msg.UpdateStateReq:
+	case msg.ChallengePlayerReq:
+		rh.CreatePlayerChallenge(session, message)
 
-	case msg.AnimationDoneReq:
+	case msg.ProposalAnswerReq:
 
-	case msg.GameOverReq:
-
+	default:
+		fmt.Printf("Unknown request %d\n", message.ID)
 	}
+
 	return true
 }
 
@@ -72,26 +74,13 @@ func (rh *RequestHandler) CreateNewPlayer(session *Session, message msg.Message)
 	}
 }
 
-func (rh *RequestHandler) StartTurn(player int) {
-	fmt.Printf("Player %d is starting their turn...\n", player)
+func (rh *RequestHandler) CreatePlayerChallenge(session *Session, message msg.Message) {
+	opponentUsername := string(message.Content[0])
+	opponentSession := rh.lobby.GetSession(opponentUsername)
+	opponentSession.SendChallengeProposal(session.GetUsername())
+	session.WaitForChallengeResponse()
 }
 
-func (rh *RequestHandler) handleResponse(session *Session, message msg.Message) bool {
-	switch message.ID {
-	case msg.NewPlayerResp:
-
-	case msg.StartGameResp:
-
-	case msg.StartTurnResp:
-
-	case msg.PlacePieceResp:
-
-	case msg.UpdateStateResp:
-
-	case msg.AnimationDoneResp:
-
-	case msg.GameOverResp:
-
-	}
-	return true
+func (rh *RequestHandler) StartTurn(player int) {
+	fmt.Printf("Player %d is starting their turn...\n", player)
 }

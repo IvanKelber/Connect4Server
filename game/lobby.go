@@ -1,7 +1,6 @@
 package game
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"sync"
@@ -60,14 +59,19 @@ func (lobby *Lobby) UpdatePlayers() {
 	}
 	fmt.Println("Creating message: ", usernames)
 	m := msg.CreateNewMessage(msg.Response, msg.UpdateLobbyResp, msg.DefaultContentDelimiter, usernames)
-	b := bytes.Buffer{}
-	msg.Serialize(m, &b)
 	for _, session := range lobby.data {
 		fmt.Printf("Sending message to %s with address %v\n", session.GetUsername(), session.GetAddress())
-		session.Write(b.Bytes())
+		session.SendMessage(m)
 	}
 	fmt.Println()
 	fmt.Printf("Lobby: %s\n", lobby)
+}
+
+func (lobby *Lobby) GetSession(username string) *Session {
+	if session, ok := lobby.data[username]; ok {
+		return session
+	}
+	return nil
 }
 
 //CreateLobby once at runtime for manifest of players

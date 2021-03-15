@@ -41,8 +41,8 @@ const (
 	StartTurnReq
 	PlacePieceReq
 	UpdateStateReq
-	AnimationDoneReq
-	GameOverReq
+	ChallengePlayerReq //sent from first player to server
+	ProposalAnswerReq  //sent from second player to server in response to proposal
 )
 
 //Response types
@@ -50,11 +50,11 @@ const (
 	NewPlayerResp MessageID = iota
 	StartGameResp
 	StartTurnResp
-	PlacePieceResp
-	UpdateStateResp
-	AnimationDoneResp
-	GameOverResp
-	UpdateLobbyResp
+	PlacePieceResp        // Should contain information about win/loss/tie
+	UpdateLobbyResp       // list of strings
+	ChallengeProposalResp // string
+	WaitForChallengeResp  // void
+	ChallengeRejectedResp // bool sent to player who started the challenge
 )
 
 //CreateNewMessage is a constructor for Message
