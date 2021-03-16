@@ -19,6 +19,9 @@ type Message struct {
 	Content   [][]byte
 }
 
+const FalseByte byte = 0
+const TrueByte byte = 1
+
 //FieldDelimiter is used to deliniate sections in the byte data stream
 const FieldDelimiter byte = 28
 
@@ -43,6 +46,7 @@ const (
 	UpdateStateReq
 	ChallengePlayerReq //sent from first player to server
 	ProposalAnswerReq  //sent from second player to server in response to proposal
+	CancelProposalReq
 )
 
 //Response types
@@ -55,6 +59,7 @@ const (
 	ChallengeProposalResp // string
 	WaitForChallengeResp  // void
 	ChallengeRejectedResp // bool sent to player who started the challenge
+	CancelProposalResp
 )
 
 //CreateNewMessage is a constructor for Message

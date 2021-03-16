@@ -51,6 +51,8 @@ func (rh *RequestHandler) handleRequest(session *Session, message msg.Message) b
 		rh.CreatePlayerChallenge(session, message)
 
 	case msg.ProposalAnswerReq:
+		rh.ParseProposalAnswer(session, message)
+	case msg.CancelProposalReq:
 
 	default:
 		fmt.Printf("Unknown request %d\n", message.ID)
@@ -79,6 +81,21 @@ func (rh *RequestHandler) CreatePlayerChallenge(session *Session, message msg.Me
 	opponentSession := rh.lobby.GetSession(opponentUsername)
 	opponentSession.SendChallengeProposal(session.GetUsername())
 	session.WaitForChallengeResponse(opponentUsername)
+}
+
+func (rh *RequestHandler) ParseProposalAnswer(session *Session, message msg.Message) {
+	accepted := message.Content[0][0] == msg.TrueByte
+	if accepted {
+		// Proposal was accepted
+		player1 := string(message.Content[1])
+		player2 := string(message.Content[2])
+		fmt.Printf("Starting game between %s and %s\n", player1, player2)
+	} else {
+		// Proposal was rejected
+		player := string(message.Content[1])
+		rh.lobby.GetSession(player).ChallengeRejected()
+		fmt.Printf("%s rejected the proposal from %s\n", session.GetUsername(), player)
+	}
 }
 
 func (rh *RequestHandler) StartTurn(player int) {
