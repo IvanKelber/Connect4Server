@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"time"
 
 	"kelber.com/connect4/msg"
 )
@@ -11,10 +12,13 @@ import (
 type RequestHandler struct {
 	lobby          *Lobby
 	activeSessions *map[string]*Session
+	activeGames    *map[string]*Game
 }
 
-func CreateRequestHandler(lobby *Lobby, activeSessions *map[string]*Session) RequestHandler {
-	return RequestHandler{lobby, activeSessions}
+func CreateRequestHandler(lobby *Lobby,
+	activeSessions *map[string]*Session,
+	activeGames *map[string]*Game) RequestHandler {
+	return RequestHandler{lobby, activeSessions, activeGames}
 }
 
 func (rh *RequestHandler) DisconnectClient(session *Session) {
@@ -87,9 +91,19 @@ func (rh *RequestHandler) ParseProposalAnswer(session *Session, message msg.Mess
 	accepted := message.Content[0][0] == msg.TrueByte
 	if accepted {
 		// Proposal was accepted
-		player1 := string(message.Content[1])
-		player2 := string(message.Content[2])
-		fmt.Printf("Starting game between %s and %s\n", player1, player2)
+		username1 := string(message.Content[1])
+		username2 := string(message.Content[2])
+
+		player1 := rh.lobby.GetSession(username1)
+		player2 := rh.lobby.GetSession(username2)
+		if player1 != nil && player2 != nil {
+			fmt.Printf("Starting game between %s and %s\n", username1, username2)
+			id := fmt.Sprintf("%s%d%s", username1, time.Now().UnixNano(), username2)
+			fmt.Println("Creating id: ", id)
+			game := CreateGame(player1, player2, id)
+			(*rh.activeGames)[id] = game
+		}
+
 	} else {
 		// Proposal was rejected
 		player := string(message.Content[1])

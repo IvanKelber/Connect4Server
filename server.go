@@ -16,12 +16,13 @@ const (
 
 //Maps IP address/Port to session
 var activeSessions map[string]*game.Session
+var activeGames map[string]*game.Game
 
 func main() {
 	activeSessions = make(map[string]*game.Session)
-
+	activeGames = make(map[string]*game.Game)
 	lobby := game.CreateLobby()
-	requestHandler := game.CreateRequestHandler(&lobby, &activeSessions)
+	requestHandler := game.CreateRequestHandler(&lobby, &activeSessions, &activeGames)
 
 	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
 	l, err := net.Listen(connType, connHost+":"+connPort)

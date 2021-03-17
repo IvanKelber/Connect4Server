@@ -102,6 +102,27 @@ func (session *Session) ChallengeRejected() {
 	session.SendMessage(message)
 }
 
+func (session *Session) StartGame(g *Game) {
+	content := make([][]byte, 0)
+
+	var myTurn byte
+
+	if g.IsMyTurn(session) {
+		myTurn = msg.TrueByte
+	} else {
+		myTurn = msg.FalseByte
+	}
+	fmt.Println("GameId ", []byte(g.Id))
+	content = append(content, []byte(g.Id))
+	content = append(content, []byte{myTurn})
+
+	message := msg.CreateNewMessage(msg.Response,
+		msg.StartGameResp,
+		msg.DefaultContentDelimiter,
+		content)
+	session.SendMessage(message)
+}
+
 func (session *Session) TestClientHandler() {
 	// var testByteStream = []byte{1, 28, 4, 28, 29, 28, 105, 118}
 	// var testByteStream2 = []byte{97, 110, 110, 110, 29, 28, 31}
