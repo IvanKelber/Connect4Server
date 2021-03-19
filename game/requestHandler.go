@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"time"
 
 	"kelber.com/connect4/msg"
@@ -50,6 +51,7 @@ func (rh *RequestHandler) handleRequest(session *Session, message msg.Message) b
 		player := int(message.Content[0][0])
 		rh.StartTurn(player)
 	case msg.PlacePieceReq:
+		rh.PlacePiece(session, message)
 
 	case msg.ChallengePlayerReq:
 		rh.CreatePlayerChallenge(session, message)
@@ -114,4 +116,19 @@ func (rh *RequestHandler) ParseProposalAnswer(session *Session, message msg.Mess
 
 func (rh *RequestHandler) StartTurn(player int) {
 	fmt.Printf("Player %d is starting their turn...\n", player)
+}
+
+func (rh *RequestHandler) PlacePiece(session *Session, message msg.Message) {
+	gameId := string(message.Content[0])
+	column, err := strconv.Atoi(string(message.Content[1]))
+	if err == nil {
+		if game, ok := (*rh.activeGames)[gameId]; ok {
+			fmt.Println("Placing piece in column ", column)
+
+			game.PlacePiece(session, column)
+		}
+	} else {
+		fmt.Printf("Could not place piece because of error: %s\n", err)
+	}
+
 }
