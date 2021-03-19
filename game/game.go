@@ -64,6 +64,11 @@ func (g *Game) PlacePiece(session *Session, column int) {
 	}
 	fmt.Println("Placed piece... board is now")
 	fmt.Println(g)
+
+	winner := g.CheckBoardState()
+	if winner != -1 {
+		fmt.Println("Found winner", winner)
+	}
 }
 
 func (g Game) findRowFromColumn(column int) int {
@@ -90,6 +95,107 @@ func (g Game) IsMyTurn(p *Session) bool {
 	}
 	fmt.Println(err)
 	return false
+}
+
+// Returns the index of the winning player
+func (g Game) CheckBoardState() int {
+	horizontal := g.CheckHorizontal()
+	vertical := g.CheckVertical()
+	diagonal := g.CheckDiagonal()
+	if horizontal != -1 {
+		return horizontal
+	}
+	if vertical != -1 {
+		return vertical
+	}
+	if diagonal != -1 {
+		return diagonal
+	}
+	return -1
+}
+
+func (g Game) CheckHorizontal() int {
+	for row := range g.board {
+		count := 0
+		lastPiece := 0
+		for _, piece := range g.board[row] {
+			if piece != -1 && piece == lastPiece {
+				count++
+				if count >= 4 {
+					return lastPiece
+				}
+			} else if piece != lastPiece {
+				count = 1
+				lastPiece = piece
+			}
+		}
+	}
+	return -1
+}
+
+func (g Game) CheckVertical() int {
+	for col := range g.board[0] {
+		count := 0
+		lastPiece := 0
+		for row := range g.board {
+			piece := g.board[row][col]
+			if piece != -1 && piece == lastPiece {
+				count++
+				if count >= 4 {
+					return lastPiece
+				}
+			} else if piece != lastPiece {
+				count = 1
+				lastPiece = piece
+			}
+		}
+	}
+	return -1
+}
+
+func (g Game) CheckDiagonal() int {
+	// Check up/right
+	for row := 0; row < BoardRows-3; row++ {
+		for col := 3; col < BoardCols; col++ {
+			piece := g.board[row][col]
+			if piece != -1 {
+				count := 1
+				for k := 1; k < 4; k++ {
+					if g.board[row+k][col-k] == piece {
+						count++
+						continue
+					}
+					break
+				}
+				if count == 4 {
+					return piece
+				}
+			}
+		}
+	}
+
+	// Check down/right
+	for row := 0; row < BoardRows-3; row++ {
+		for col := 0; col < BoardCols-3; col++ {
+			piece := g.board[row][col]
+			if piece != -1 {
+				count := 1
+				for k := 1; k < 4; k++ {
+					if g.board[row+k][col+k] == piece {
+						count++
+						continue
+					}
+					break
+				}
+				if count == 4 {
+					return piece
+				}
+			}
+		}
+	}
+
+	return -1
+
 }
 
 //IsFull allows a convenient method for determining if there is space
