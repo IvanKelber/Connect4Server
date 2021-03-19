@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strconv"
 
 	"kelber.com/connect4/msg"
 )
@@ -121,6 +122,34 @@ func (session *Session) StartGame(g *Game) {
 		msg.DefaultContentDelimiter,
 		content)
 	session.SendMessage(message)
+}
+
+func (session *Session) NotifyBoardUpdate(game *Game, column, winner int) {
+	// Column, gameWon?, am I the winner?
+	content := make([][]byte, 0)
+
+	content = append(content, []byte(strconv.Itoa(column)))
+	if winner == -1 {
+		content = append(content, []byte{msg.FalseByte})
+	} else {
+		content = append(content, []byte{msg.TrueByte})
+	}
+	playerId, err := game.GetPlayerId(session)
+	if err != nil {
+		fmt.Println("Uh, player doesn't exist wtf")
+		return
+	}
+	if winner == playerId {
+		content = append(content, []byte{msg.TrueByte})
+	} else {
+		content = append(content, []byte{msg.FalseByte})
+	}
+	message := msg.CreateNewMessage(msg.Response,
+		msg.PlacePieceResp,
+		msg.DefaultContentDelimiter,
+		content)
+	session.SendMessage(message)
+
 }
 
 func (session *Session) TestClientHandler() {

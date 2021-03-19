@@ -66,9 +66,35 @@ func (g *Game) PlacePiece(session *Session, column int) {
 	fmt.Println(g)
 
 	winner := g.CheckBoardState()
-	if winner != -1 {
-		fmt.Println("Found winner", winner)
+
+	for _, player := range g.players {
+		if session != player {
+			session.NotifyBoardUpdate(g, column, winner)
+		} else {
+			fmt.Println("Session is the same as the player that sent it")
+		}
 	}
+	if g.players[0] == g.players[1] {
+		col := g.ServerMove()
+		g.board[g.findRowFromColumn(col)][col] = 1 // Server is always a 1 when the player sessions are the same
+		winner := g.CheckBoardState()
+		fmt.Println("Server Placed piece... board is now")
+		fmt.Println(g)
+		session.NotifyBoardUpdate(g, col, winner)
+
+	}
+}
+
+func (g *Game) ServerMove() int {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	validColumns := make([]int, 0)
+	for col := 0; col < BoardCols; col++ {
+		if g.findRowFromColumn(col) != -1 {
+			validColumns = append(validColumns, col)
+		}
+	}
+	return validColumns[r.Intn(len(validColumns))]
 }
 
 func (g Game) findRowFromColumn(column int) int {
