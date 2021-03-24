@@ -124,32 +124,37 @@ func (session *Session) StartGame(g *Game) {
 	session.SendMessage(message)
 }
 
-func (session *Session) NotifyBoardUpdate(game *Game, column, winner int) {
-	// Column, gameWon?, am I the winner?
+func (session *Session) NotifyGameOver(game *Game, winner int) {
 	content := make([][]byte, 0)
 
-	content = append(content, []byte(strconv.Itoa(column)))
-	if winner == -1 {
-		content = append(content, []byte{msg.FalseByte})
-	} else {
-		content = append(content, []byte{msg.TrueByte})
-	}
 	playerId, err := game.GetPlayerId(session)
 	if err != nil {
 		fmt.Println("Uh, player doesn't exist wtf")
 		return
 	}
+	// Am I the winner?
 	if winner == playerId {
 		content = append(content, []byte{msg.TrueByte})
 	} else {
 		content = append(content, []byte{msg.FalseByte})
 	}
 	message := msg.CreateNewMessage(msg.Response,
+		msg.GameOverResp,
+		msg.DefaultContentDelimiter,
+		content)
+	session.SendMessage(message)
+}
+
+func (session *Session) PlacePiece(column int) {
+	content := make([][]byte, 0)
+
+	content = append(content, []byte(strconv.Itoa(column)))
+
+	message := msg.CreateNewMessage(msg.Response,
 		msg.PlacePieceResp,
 		msg.DefaultContentDelimiter,
 		content)
 	session.SendMessage(message)
-
 }
 
 func (session *Session) TestClientHandler() {

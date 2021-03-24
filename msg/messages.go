@@ -60,6 +60,7 @@ const (
 	WaitForChallengeResp  // void
 	ChallengeRejectedResp // bool sent to player who started the challenge
 	CancelProposalResp
+	GameOverResp
 )
 
 //CreateNewMessage is a constructor for Message
